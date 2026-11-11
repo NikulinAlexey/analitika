@@ -23,7 +23,7 @@ export default function Home() {
   const [selected, setSelected] = useState<string | null>(null);
   const [showPharmacies, setShowPharmacies] = useState(true);
   const [showClinics, setShowClinics] = useState(true);
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
 
   useEffect(() => {
     fetch('data/spb-map.json').then((r) => r.json()).then(setMapData);
