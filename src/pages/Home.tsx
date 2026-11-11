@@ -111,15 +111,15 @@ export default function Home() {
             <button type="button" role="tab" aria-selected={tab === 'map'} className={`tab ${tab === 'map' ? 'is-active' : ''}`} onClick={() => setTab('map')}>Карта</button>
             <button type="button" role="tab" aria-selected={tab === 'data'} className={`tab ${tab === 'data' ? 'is-active' : ''}`} onClick={() => setTab('data')}>Данные</button>
           </div>
+          <label className="field">
+            <span>Период</span>
+            <select value={month} onChange={(e) => setMonth(e.target.value)} className="field__select">
+              <option value="all">Весь период</option>
+              {months.map((m) => <option key={m} value={m}>{monthLabel(m)}</option>)}
+            </select>
+          </label>
           {tab === 'map' && (
             <>
-              <label className="field">
-                <span>Период</span>
-                <select value={month} onChange={(e) => setMonth(e.target.value)} className="field__select">
-                  <option value="all">Весь период</option>
-                  {months.map((m) => <option key={m} value={m}>{monthLabel(m)}</option>)}
-                </select>
-              </label>
               <button type="button" className={`chip chip--pharm ${showPharmacies ? 'is-on' : ''}`} aria-pressed={showPharmacies} onClick={() => setShowPharmacies((v) => !v)}>
                 Аптеки
               </button>
