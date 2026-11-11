@@ -37,7 +37,20 @@ function Bars({ title, items, color }: { title: string; items: { label: string; 
   );
 }
 
-export default function DataTab({ records }: { records: SaleRecord[] }) {
+const MONTH_NAMES = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const monthLabel = (key: string) => {
+  const [y, m] = key.split('-');
+  return `${MONTH_NAMES[Number(m) - 1]} ${y}`;
+};
+
+interface Props {
+  records: SaleRecord[];
+  month: string;
+  onMonthChange: (m: string) => void;
+  months: string[];
+}
+
+export default function DataTab({ records, month, onMonthChange, months }: Props) {
   const [fSub, setFSub] = useState('all');
   const [fCh, setFCh] = useState('all');
   const [fNet, setFNet] = useState('all');
@@ -52,12 +65,13 @@ export default function DataTab({ records }: { records: SaleRecord[] }) {
     () =>
       records.filter(
         (r) =>
+          (month === 'all' || r.m === month) &&
           (fSub === 'all' || r.sub === fSub) &&
           (fCh === 'all' || r.ch === fCh) &&
           (fNet === 'all' || r.n === fNet) &&
           (fProd === 'all' || r.p === fProd),
       ),
-    [records, fSub, fCh, fNet, fProd],
+    [records, month, fSub, fCh, fNet, fProd],
   );
 
   const totals = useMemo(
@@ -95,6 +109,13 @@ export default function DataTab({ records }: { records: SaleRecord[] }) {
     <div className="data-tab">
       <div className="data-tab__filters">
         <label className="field field--light">
+          <span>Период</span>
+          <select value={month} onChange={(e) => onMonthChange(e.target.value)} className="field__select">
+            <option value="all">Весь период</option>
+            {months.map((m) => <option key={m} value={m}>{monthLabel(m)}</option>)}
+          </select>
+        </label>
+        <label className="field field--light">
           <span>Субъект РФ</span>
           <select value={fSub} onChange={(e) => setFSub(e.target.value)} className="field__select">
             <option value="all">Все</option>
@@ -122,7 +143,7 @@ export default function DataTab({ records }: { records: SaleRecord[] }) {
             {products.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </label>
-        <button type="button" className="data-tab__reset" onClick={() => { setFSub('all'); setFCh('all'); setFNet('all'); setFProd('all'); }}>
+        <button type="button" className="data-tab__reset" onClick={() => { setFSub('all'); setFCh('all'); setFNet('all'); setFProd('all'); onMonthChange('all'); }}>
           Сбросить фильтры
         </button>
       </div>

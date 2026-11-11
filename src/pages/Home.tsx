@@ -132,7 +132,7 @@ export default function Home() {
       </header>
 
       {tab === 'data' ? (
-        <DataTab records={sales} />
+        <DataTab records={sales} month={month} onMonthChange={setMonth} months={months} />
       ) : (
         <main className="layout">
           <section className={`map-wrap ${panelOpen ? 'is-narrow' : ''}`}>
