@@ -118,21 +118,11 @@ export default function Home() {
               {months.map((m) => <option key={m} value={m}>{monthLabel(m)}</option>)}
             </select>
           </label>
-          {tab === 'map' && (
-            <>
-              <button type="button" className={`chip chip--pharm ${showPharmacies ? 'is-on' : ''}`} aria-pressed={showPharmacies} onClick={() => setShowPharmacies((v) => !v)}>
-                Аптеки
-              </button>
-              <button type="button" className={`chip chip--clinic ${showClinics ? 'is-on' : ''}`} aria-pressed={showClinics} onClick={() => setShowClinics((v) => !v)}>
-                Поликлиники
-              </button>
-            </>
-          )}
         </div>
       </header>
 
       {tab === 'data' ? (
-        <DataTab records={sales} month={month} onMonthChange={setMonth} months={months} />
+        <DataTab records={sales} month={month} />
       ) : (
         <main className="layout">
           <section className={`map-wrap ${panelOpen ? 'is-narrow' : ''}`}>
@@ -151,6 +141,14 @@ export default function Home() {
               <span className="legend__title">Продажи, шт</span>
               <div className="legend__bar" />
               <div className="legend__scale"><span>0</span><span>{fmtInt.format(100)}+</span></div>
+            </div>
+            <div className="map-chips" role="group" aria-label="Отображаемые объекты">
+              <button type="button" className={`chip chip--pharm ${showPharmacies ? 'is-on' : ''}`} aria-pressed={showPharmacies} onClick={() => setShowPharmacies((v) => !v)}>
+                Аптеки
+              </button>
+              <button type="button" className={`chip chip--clinic ${showClinics ? 'is-on' : ''}`} aria-pressed={showClinics} onClick={() => setShowClinics((v) => !v)}>
+                Поликлиники
+              </button>
             </div>
             <button type="button" className={`panel-toggle ${panelOpen ? 'is-on' : ''}`} onClick={() => setPanelOpen((v) => !v)} aria-expanded={panelOpen}>
               {panelOpen ? 'К карте' : 'Статистика'}

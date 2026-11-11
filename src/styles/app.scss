@@ -114,6 +114,16 @@ body {
   box-shadow: 0 4px 14px rgba(22,48,58,0.12);
 }
 .legend__title { font-size: 12px; font-weight: 650; color: $ink-soft; }
+.map-chips {
+  position: absolute; left: 14px; top: 14px; z-index: 6;
+  display: flex; gap: 8px;
+  .chip {
+    background: rgba(23,63,77,0.92);
+    border-color: rgba(242,240,230,0.5);
+    color: #f2f0e6;
+    &:hover { background: rgba(36,66,79,0.95); }
+  }
+}
 .legend--dark { background: rgba(23,63,77,0.85); border-color: rgba(242,240,230,0.25); }
 .legend--dark .legend__title { color: #f2f0e6; }
 .legend--dark .legend__scale { color: rgba(242,240,230,0.75); }
