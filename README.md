@@ -20,13 +20,18 @@ React + TypeScript + Vite, SCSS, данные — JSON. Ни одного вне
 ## Пайплайн данных
 
 ```
-src/rawData/*.xlsx  ->  npm run convert  ->  public/data/sales.json  ->  приложение
+src/rawData/*.xlsx  ->  npm run convert  ->  public/data/sales.enc.json  ->  приложение (расшифровка по коду)
 ```
 
 1. Excel-выгрузки складываются руками в `src/rawData/` (по файлу на агента).
 2. `npm run convert` (скрипт `scripts/convert.mjs`, SheetJS `xlsx`) читает все
-   `.xlsx` и пишет `public/data/sales.json`.
-3. Приложение читает `sales.json` через `fetch`.
+   `.xlsx`, шифрует результат AES-256-GCM ключом из кода доступа и пишет
+   `public/data/sales.enc.json`. Открытый `sales.json` не публикуется.
+3. Код доступа задаётся переменной окружения `ACCESS_PIN` или файлом
+   `scripts/access.pin` (4 цифры, в git не коммитится). Смена кода = перезапуск
+   `npm run convert`.
+4. Приложение показывает экран входа; после ввода кода `sales.enc.json`
+   расшифровывается в браузере (WebCrypto) и только тогда данные попадают в DOM.
 
 Скрипт сам разбирается с форматами:
 
@@ -40,7 +45,7 @@ src/rawData/*.xlsx  ->  npm run convert  ->  public/data/sales.json  ->  при�
   имена совпадают с `spb-map.json`);
 - бонусы не экспортируются (todo п.6).
 
-## Формат `sales.json`
+## Формат `sales.json` (шифруется в `sales.enc.json`)
 
 ```json
 {
@@ -58,7 +63,7 @@ src/rawData/*.xlsx  ->  npm run convert  ->  public/data/sales.json  ->  при�
 - `public/data/spb-map.json` — SVG-карта: районы СПб (`districts`) и ЛО
   (`loDistricts`, имена в формате `X район`)
 - `public/data/objects.json` — аптеки и поликлиники (name, type, district, lon, lat)
-- `public/data/sales.json` — строки продаж
+- `public/data/sales.enc.json` — строки продаж (AES-256-GCM, ключ из кода доступа)
 
 ## Запуск
 
@@ -66,7 +71,7 @@ src/rawData/*.xlsx  ->  npm run convert  ->  public/data/sales.json  ->  при�
 npm install
 npm run dev      # разработка
 npm run build    # сборка в dist/
-npm run convert  # перегенерация sales.json из src/rawData/*.xlsx
+npm run convert  # перегенерация sales.enc.json (нужен ACCESS_PIN)
 ```
 
 ## Структура
@@ -75,5 +80,6 @@ npm run convert  # перегенерация sales.json из src/rawData/*.xlsx
 - `src/pages/Home.tsx` — главный экран, вкладки, состояние фильтров.
 - `src/components/MapView.tsx` — локальная SVG-карта районов и маркеров.
 - `src/components/DataTab.tsx` — вкладка «Данные»: KPI, графики, таблица.
-- `src/data/sales.ts` — загрузка и агрегация продаж.
+- `src/components/LoginGate.tsx` — экран входа (код доступа), гейт на весь контент.
+- `src/data/sales.ts` — расшифровка и агрегация продаж.
 - `src/types/sales.ts` — типы `SaleRecord` / `SalesFile`.

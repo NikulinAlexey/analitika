@@ -327,3 +327,32 @@ tbody tr.is-selected { background: rgba(204,142,42,0.16); }
 @media (prefers-reduced-motion: reduce) {
   .panel, .map-wrap, .chip { transition: none; }
 }
+
+// ---------- Экран входа ----------
+.login {
+  display: flex; align-items: center; justify-content: center;
+  height: 100dvh; padding: 20px; background: $paper;
+}
+.login__card {
+  width: 100%; max-width: 380px; padding: 30px 26px; text-align: center;
+  background: #fff; border: 1px solid $line; border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(22, 48, 58, 0.08);
+}
+.login__title { margin: 0 0 4px; font-size: 18px; font-weight: 650; color: $ink; }
+.login__subtitle { margin: 0 0 22px; font-size: 13px; color: $ink-soft; }
+.login__input {
+  width: 190px; height: 64px; font-size: 34px; font-weight: 600;
+  letter-spacing: 14px; text-indent: 14px; text-align: center;
+  font-variant-numeric: tabular-nums; color: $ink;
+  background: $paper; border: 1px solid $line; border-radius: 12px;
+  outline: none; transition: border-color 0.15s ease;
+  &:focus { border-color: $teal; }
+  &.is-error { border-color: #b3402c; animation: login-shake 0.3s ease; }
+}
+.login__error { min-height: 20px; margin-top: 12px; font-size: 13px; color: #b3402c; }
+.login__hint { margin-top: 6px; font-size: 12px; color: $ink-soft; opacity: 0.7; }
+@keyframes login-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}

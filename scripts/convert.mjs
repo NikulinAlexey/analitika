@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Конвертация Excel-выгрузок из src/rawData/*.xlsx -> public/data/sales.json
+ * Конвертация Excel-выгрузок из src/rawData/*.xlsx -> public/data/sales.enc.json
  *
  * Формат записей (см. src/types/sales.ts):
  *   { d, m, a, sub, ct, dst, ch, p, n, pt, q, s }
@@ -16,18 +16,25 @@
  *     (сегодня это Морозова Анна и "!СПб- не определено").
  *     Так при появлении персонального файла Морозовой дубли исчезнут сами.
  *
+ * Результат шифруется AES-256-GCM; ключ = PBKDF2-SHA256(код, salt, 100k итераций).
+ * Код доступа: переменная окружения ACCESS_PIN или файл scripts/access.pin (4 цифры).
+ *
  * Запуск: npm run convert
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import XLSX from 'xlsx';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const RAW_DIR = path.join(ROOT, 'src', 'rawData');
-const OUT_PATH = path.join(ROOT, 'public', 'data', 'sales.json');
+const OUT_ENC_PATH = path.join(ROOT, 'public', 'data', 'sales.enc.json');
+const OUT_PLAIN_PATH = path.join(ROOT, 'public', 'data', 'sales.json'); // не публикуется
+const PIN_PATH = path.join(__dirname, 'access.pin');
+const PBKDF2_ITERATIONS = 100000;
 
 const LO_SUBJECT = 'Ленинградская область';
 
@@ -246,13 +253,42 @@ function main() {
       x.p.localeCompare(y.p, 'ru')
   );
 
-  fs.mkdirSync(path.dirname(OUT_PATH), { recursive: true });
-  fs.writeFileSync(OUT_PATH, JSON.stringify({ meta, records: taken }, null, 1) + '\n', 'utf8');
+  fs.mkdirSync(path.dirname(OUT_ENC_PATH), { recursive: true });
+
+  // Код доступа: env ACCESS_PIN или файл scripts/access.pin (в git не коммитится)
+  let pin = process.env.ACCESS_PIN || '';
+  if (!pin && fs.existsSync(PIN_PATH)) pin = fs.readFileSync(PIN_PATH, 'utf8').trim();
+  if (!/^\d{4}$/.test(pin)) {
+    throw new Error(
+      'Код доступа не задан: задайте переменную ACCESS_PIN или файл scripts/access.pin (4 цифры)'
+    );
+  }
+
+  // AES-256-GCM: ключ = PBKDF2-SHA256(код, salt, 100k). data = ciphertext + auth tag —
+  // формат совместим с WebCrypto на клиенте (см. src/data/sales.ts).
+  const payload = JSON.stringify({ meta, records: taken }, null, 1) + '\n';
+  const salt = crypto.randomBytes(16);
+  const iv = crypto.randomBytes(12);
+  const key = crypto.pbkdf2Sync(pin, salt, PBKDF2_ITERATIONS, 32, 'sha256');
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const data = Buffer.concat([cipher.update(payload, 'utf8'), cipher.final(), cipher.getAuthTag()]);
+
+  fs.writeFileSync(
+    OUT_ENC_PATH,
+    JSON.stringify({
+      salt: salt.toString('base64'),
+      iv: iv.toString('base64'),
+      data: data.toString('base64'),
+    }) + '\n',
+    'utf8'
+  );
+  // Открытая версия не публикуется
+  if (fs.existsSync(OUT_PLAIN_PATH)) fs.rmSync(OUT_PLAIN_PATH);
 
   console.log(
     `\nИтого: ${meta.rows} строк, ${total.q} шт, ${total.s} ₽, период ${meta.from}..${meta.to}`
   );
-  console.log(`Записано: ${path.relative(ROOT, OUT_PATH)}`);
+  console.log(`Записано: ${path.relative(ROOT, OUT_ENC_PATH)} (AES-256-GCM, ключ из кода доступа)`);
 }
 
 main();

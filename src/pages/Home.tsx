@@ -14,7 +14,7 @@ const monthLabel = (key: string) => {
   return `${MONTH_NAMES[Number(m) - 1]} ${y}`;
 };
 
-export default function Home() {
+export default function Home({ pin, onLogout }: { pin: string; onLogout: () => void }) {
   const [tab, setTab] = useState<"map" | "data">("data");
   const [mapData, setMapData] = useState<MapData | null>(null);
   const [objects, setObjects] = useState<MapObject[]>([]);
@@ -26,10 +26,11 @@ export default function Home() {
   const [panelOpen, setPanelOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
 
   useEffect(() => {
+    if (!pin) return;
     fetch('data/spb-map.json').then((r) => r.json()).then(setMapData);
     fetch('data/objects.json').then((r) => r.json()).then(setObjects);
-    loadSales().then(setSales);
-  }, []);
+    loadSales(pin).then(setSales);
+  }, [pin]);
 
   const months = useMemo(() => [...new Set(sales.map((r) => r.m))].sort(), [sales]);
   const byMonth = useMemo(
@@ -118,6 +119,7 @@ export default function Home() {
               {months.map((m) => <option key={m} value={m}>{monthLabel(m)}</option>)}
             </select>
           </label>
+          <button type="button" className="chip" onClick={onLogout}>Выйти</button>
         </div>
       </header>
 
