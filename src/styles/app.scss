@@ -258,6 +258,19 @@ tbody tr.is-selected { background: rgba(204,142,42,0.16); }
 }
 .field--light { color: $ink; }
 .field--light span { color: $ink-soft; }
+.field__row { display: flex; gap: 6px; align-items: stretch; }
+.field__row .field__select { flex: 1; }
+.field__reset {
+  flex: none; width: 40px; min-height: 40px; border-radius: 10px;
+  border: 1px solid $line; background: transparent; color: $ink-soft;
+  font-size: 16px; line-height: 1; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  &:hover:not(:disabled) { color: $ink; border-color: $ink-soft; background: $paper; }
+  &:focus-visible { outline: 2px solid $teal; outline-offset: 2px; }
+  &:disabled {
+    opacity: 0.4; cursor: not-allowed;
+  }
+}
 .field--light .field__select {
   background: $paper; border: 1px solid $line; color: $ink; min-width: 170px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2343585f' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -307,6 +320,7 @@ tbody tr.is-selected { background: rgba(204,142,42,0.16); }
   .data-tab { padding: 14px 12px 24px; }
   .field--light .field__select { min-width: 0; width: 100%; }
   .data-tab__filters .field { flex: 1 1 45%; }
+  .data-tab__filters .field__row { width: 100%; }
   .bar-row { grid-template-columns: 110px 1fr 76px; }
 }
 

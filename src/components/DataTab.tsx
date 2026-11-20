@@ -37,17 +37,61 @@ function Bars({ title, items, color }: { title: string; items: { label: string; 
   );
 }
 
+function FilterField({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="field field--light">
+      <span>{label}</span>
+      <div className="field__row">
+        <select value={value} onChange={(e) => onChange(e.target.value)} className="field__select">
+          <option value="all">Все</option>
+          {options.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          className="field__reset"
+          title="Сбросить фильтр"
+          aria-label={`Сбросить фильтр: ${label}`}
+          disabled={value === 'all'}
+          onClick={() => onChange('all')}
+        >
+          ×
+        </button>
+      </div>
+    </label>
+  );
+}
+
 interface Props {
   records: SaleRecord[];
   month: string;
 }
 
 export default function DataTab({ records, month }: Props) {
+  const [fAgent, setFAgent] = useState('all');
   const [fSub, setFSub] = useState('all');
   const [fCh, setFCh] = useState('all');
   const [fNet, setFNet] = useState('all');
   const [fProd, setFProd] = useState('all');
 
+  const agents = useMemo(() => {
+    const set = [...new Set(records.map((r) => r.a))].sort((a, b) => a.localeCompare(b, 'ru'));
+    // служебные строки ("!СПб- не определено") — в конец списка
+    return [...set.filter((s) => !s.startsWith('!')), ...set.filter((s) => s.startsWith('!'))];
+  }, [records]);
   const subjects = useMemo(() => [...new Set(records.map((r) => r.sub))].sort(), [records]);
   const channels = useMemo(() => [...new Set(records.map((r) => r.ch))].sort(), [records]);
   const networks = useMemo(() => [...new Set(records.map((r) => r.n))].sort(), [records]);
@@ -58,19 +102,20 @@ export default function DataTab({ records, month }: Props) {
       records.filter(
         (r) =>
           (month === 'all' || r.m === month) &&
+          (fAgent === 'all' || r.a === fAgent) &&
           (fSub === 'all' || r.sub === fSub) &&
           (fCh === 'all' || r.ch === fCh) &&
           (fNet === 'all' || r.n === fNet) &&
           (fProd === 'all' || r.p === fProd),
       ),
-    [records, month, fSub, fCh, fNet, fProd],
+    [records, month, fAgent, fSub, fCh, fNet, fProd],
   );
 
   const totals = useMemo(
     () =>
       filtered.reduce(
-        (a, r) => ({ q: a.q + r.q, s: a.s + r.s, b: a.b + r.b, pt: a.pt.add(r.pt) }),
-        { q: 0, s: 0, b: 0, pt: new Set<string>() },
+        (a, r) => ({ q: a.q + r.q, s: a.s + r.s, pt: a.pt.add(r.pt) }),
+        { q: 0, s: 0, pt: new Set<string>() },
       ),
     [filtered],
   );
@@ -88,10 +133,10 @@ export default function DataTab({ records, month }: Props) {
   }, [filtered]);
 
   const participants = useMemo(() => {
-    const m = new Map<string, { name: string; net: string; city: string; sub: string; q: number; s: number; b: number }>();
+    const m = new Map<string, { name: string; net: string; city: string; sub: string; q: number; s: number }>();
     for (const r of filtered) {
-      const cur = m.get(r.pt) ?? { name: r.pt, net: r.n, city: r.ct ?? '—', sub: r.sub, q: 0, s: 0, b: 0 };
-      cur.q += r.q; cur.s += r.s; cur.b += r.b;
+      const cur = m.get(r.pt) ?? { name: r.pt, net: r.n, city: r.ct ?? '—', sub: r.sub, q: 0, s: 0 };
+      cur.q += r.q; cur.s += r.s;
       m.set(r.pt, cur);
     }
     return [...m.values()].sort((a, b) => b.s - a.s);
@@ -100,35 +145,12 @@ export default function DataTab({ records, month }: Props) {
   return (
     <div className="data-tab">
       <div className="data-tab__filters">
-        <label className="field field--light">
-          <span>Субъект РФ</span>
-          <select value={fSub} onChange={(e) => setFSub(e.target.value)} className="field__select">
-            <option value="all">Все</option>
-            {subjects.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </label>
-        <label className="field field--light">
-          <span>Канал</span>
-          <select value={fCh} onChange={(e) => setFCh(e.target.value)} className="field__select">
-            <option value="all">Все</option>
-            {channels.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </label>
-        <label className="field field--light">
-          <span>Сеть</span>
-          <select value={fNet} onChange={(e) => setFNet(e.target.value)} className="field__select">
-            <option value="all">Все</option>
-            {networks.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </label>
-        <label className="field field--light">
-          <span>Продукт (БАД)</span>
-          <select value={fProd} onChange={(e) => setFProd(e.target.value)} className="field__select">
-            <option value="all">Все</option>
-            {products.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </label>
-        <button type="button" className="data-tab__reset" onClick={() => { setFSub('all'); setFCh('all'); setFNet('all'); setFProd('all'); }}>
+        <FilterField label="Агент" value={fAgent} options={agents} onChange={setFAgent} />
+        <FilterField label="Субъект РФ" value={fSub} options={subjects} onChange={setFSub} />
+        <FilterField label="Канал" value={fCh} options={channels} onChange={setFCh} />
+        <FilterField label="Сеть" value={fNet} options={networks} onChange={setFNet} />
+        <FilterField label="Продукт (БАД)" value={fProd} options={products} onChange={setFProd} />
+        <button type="button" className="data-tab__reset" onClick={() => { setFAgent('all'); setFSub('all'); setFCh('all'); setFNet('all'); setFProd('all'); }}>
           Сбросить фильтры
         </button>
       </div>
@@ -136,7 +158,6 @@ export default function DataTab({ records, month }: Props) {
       <div className="kpis">
         <div className="kpi"><span className="kpi__value">{fmtInt.format(totals.s)} ₽</span><span className="kpi__label">сумма продаж</span></div>
         <div className="kpi"><span className="kpi__value">{fmtInt.format(totals.q)}</span><span className="kpi__label">штук продано</span></div>
-        <div className="kpi"><span className="kpi__value">{fmtInt.format(totals.b)} ₽</span><span className="kpi__label">бонусы</span></div>
         <div className="kpi"><span className="kpi__value">{totals.pt.size}</span><span className="kpi__label">участников</span></div>
         <div className="kpi"><span className="kpi__value">{filtered.length}</span><span className="kpi__label">строк продаж</span></div>
       </div>
@@ -154,7 +175,7 @@ export default function DataTab({ records, month }: Props) {
         <div className="table-scroll">
           <table>
             <thead>
-              <tr><th>Участник</th><th>Сеть</th><th>Город</th><th>Субъект</th><th className="num">Шт</th><th className="num">Сумма, ₽</th><th className="num">Бонус, ₽</th></tr>
+              <tr><th>Участник</th><th>Сеть</th><th>Город</th><th>Субъект</th><th className="num">Шт</th><th className="num">Сумма, ₽</th></tr>
             </thead>
             <tbody>
               {participants.map((p) => (
@@ -165,7 +186,6 @@ export default function DataTab({ records, month }: Props) {
                   <td>{p.sub}</td>
                   <td className="num">{fmtInt.format(p.q)}</td>
                   <td className="num">{fmtInt.format(p.s)}</td>
-                  <td className="num">{fmtInt.format(p.b)}</td>
                 </tr>
               ))}
             </tbody>

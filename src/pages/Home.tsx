@@ -15,7 +15,7 @@ const monthLabel = (key: string) => {
 };
 
 export default function Home() {
-  const [tab, setTab] = useState<'map' | 'data'>('map');
+  const [tab, setTab] = useState<"map" | "data">("data");
   const [mapData, setMapData] = useState<MapData | null>(null);
   const [objects, setObjects] = useState<MapObject[]>([]);
   const [sales, setSales] = useState<SaleRecord[]>([]);
