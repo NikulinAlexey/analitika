@@ -70,13 +70,14 @@ function toYMD(d) {
   return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
 }
 
-/** Excel serial (1900-система) -> YYYY-MM-DD */
+/** Excel serial (1900-система) -> YYYY-MM-DD. Дата = floor(serial): время из
+ *  дробной части отбрасываем (таблица ежедневная). Не используем cellDates/Date:
+ *  SheetJS 0.18.5 отдаёт Date в локальной зоне со сдвигом (см. комментарий выше). */
 function serialToYMD(n) {
-  return toYMD(new Date(Math.round((n - 25569) * 86400000)));
+  return toYMD(new Date(Math.round((Math.floor(n) - 25569) * 86400000)));
 }
 
 function toISODate(v) {
-  if (v instanceof Date && !isNaN(v)) return toYMD(v);
   if (typeof v === 'number' && Number.isFinite(v)) return serialToYMD(v);
   const s = norm(v);
   if (/^\d+$/.test(s)) return serialToYMD(Number(s));
@@ -94,7 +95,10 @@ function loDistrictFromAddress(address) {
 }
 
 function parseFile(filePath, fileName) {
-  const wb = XLSX.readFile(filePath, { cellDates: true });
+  // cellDates: false — критично: SheetJS 0.18.5 с cellDates:true создаёт Date
+  // в локальной зоне как «23:59:43 предыдущего дня», из-за чего даты уезжают
+  // на -1 день (таймзонный баг, MSK). Даты читаем из raw serial — см. serialToYMD.
+  const wb = XLSX.readFile(filePath, { cellDates: false });
   const sheetName =
     wb.SheetNames.find((n) => n.trim().toLowerCase() === 'data') ?? wb.SheetNames[0];
   const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {

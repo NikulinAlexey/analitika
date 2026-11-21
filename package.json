@@ -9,7 +9,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "convert": "node scripts/convert.mjs"
+    "convert": "node scripts/convert.mjs",
+    "audit": "node scripts/audit.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
