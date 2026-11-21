@@ -12,7 +12,7 @@ function isoWeek(d: string): string {
   const fDay = (firstThursday.getUTCDay() + 6) % 7;
   firstThursday.setUTCDate(firstThursday.getUTCDate() - fDay + 3);
   const week = 1 + Math.round((dt.getTime() - firstThursday.getTime()) / (7 * 864e5));
-  return `${dt.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+  return `${String(week).padStart(2, "0")} нед. ${dt.getUTCFullYear()}`;
 }
 
 function Bars({ title, items, color }: { title: string; items: { label: string; value: number }[]; color: string }) {
