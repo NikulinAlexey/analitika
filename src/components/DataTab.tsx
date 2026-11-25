@@ -4,6 +4,8 @@ import { groupSum } from '../data/sales';
 
 const fmtInt = new Intl.NumberFormat('ru-RU');
 
+const networkLabel = (r: SaleRecord) => r.n === 'Others' ? r.pt : r.n;
+
 function Bars({ title, items, color }: { title: string; items: { label: string; value: number }[]; color: string }) {
   const max = Math.max(...items.map((i) => i.value), 1);
   const shown = items.slice(0, 8);
@@ -83,7 +85,7 @@ export default function DataTab({ records, month }: Props) {
   }, [records]);
   const subjects = useMemo(() => [...new Set(records.map((r) => r.sub))].sort(), [records]);
   const channels = useMemo(() => [...new Set(records.map((r) => r.ch))].sort(), [records]);
-  const networks = useMemo(() => [...new Set(records.map((r) => r.n))].sort(), [records]);
+  const networks = useMemo(() => [...new Set(records.map(networkLabel))].sort((a, b) => a.localeCompare(b, 'ru')), [records]);
   const products = useMemo(() => [...new Set(records.map((r) => r.p))].sort(), [records]);
 
   const filtered = useMemo(
@@ -94,7 +96,7 @@ export default function DataTab({ records, month }: Props) {
           (fAgent === 'all' || r.a === fAgent) &&
           (fSub === 'all' || r.sub === fSub) &&
           (fCh === 'all' || r.ch === fCh) &&
-          (fNet === 'all' || r.n === fNet) &&
+          (fNet === 'all' || networkLabel(r) === fNet) &&
           (fProd === 'all' || r.p === fProd),
       ),
     [records, month, fAgent, fSub, fCh, fNet, fProd],
@@ -110,14 +112,14 @@ export default function DataTab({ records, month }: Props) {
   );
 
   const byProduct = useMemo(() => groupSum(filtered, (r) => r.p, (r) => r.s), [filtered]);
-  const byNetwork = useMemo(() => groupSum(filtered, (r) => r.n, (r) => r.s), [filtered]);
+  const byNetwork = useMemo(() => groupSum(filtered, networkLabel, (r) => r.s), [filtered]);
   const bySubject = useMemo(() => groupSum(filtered, (r) => r.sub, (r) => r.s), [filtered]);
   const byDistrict = useMemo(
     () => groupSum(filtered.filter((r) => r.dst), (r) => r.dst ?? '', (r) => r.s),
     [filtered],
   );
   const byProductQty = useMemo(() => groupSum(filtered, (r) => r.p, (r) => r.q), [filtered]);
-  const byNetworkQty = useMemo(() => groupSum(filtered, (r) => r.n, (r) => r.q), [filtered]);
+  const byNetworkQty = useMemo(() => groupSum(filtered, networkLabel, (r) => r.q), [filtered]);
   const bySubjectQty = useMemo(() => groupSum(filtered, (r) => r.sub, (r) => r.q), [filtered]);
   const byDistrictQty = useMemo(
     () => groupSum(filtered.filter((r) => r.dst), (r) => r.dst ?? '', (r) => r.q),
@@ -140,7 +142,7 @@ export default function DataTab({ records, month }: Props) {
         <FilterField label="Агент" value={fAgent} options={agents} onChange={setFAgent} />
         <FilterField label="Субъект РФ" value={fSub} options={subjects} onChange={setFSub} />
         <FilterField label="Канал" value={fCh} options={channels} onChange={setFCh} />
-        <FilterField label="Сеть" value={fNet} options={networks} onChange={setFNet} />
+        <FilterField label="Сеть / организация" value={fNet} options={networks} onChange={setFNet} />
         <FilterField label="Продукт (БАД)" value={fProd} options={products} onChange={setFProd} />
         <button type="button" className="data-tab__reset" onClick={() => { setFAgent('all'); setFSub('all'); setFCh('all'); setFNet('all'); setFProd('all'); }}>
           Сбросить фильтры
@@ -156,11 +158,11 @@ export default function DataTab({ records, month }: Props) {
 
       <div className="charts-grid">
         <Bars title="Продажи по продуктам, ₽" items={byProduct} color="#a9b068" />
-        <Bars title="Продажи по сетям, ₽" items={byNetwork} color="#2e7d5b" />
+        <Bars title="Продажи по сетям / организациям, ₽" items={byNetwork} color="#2e7d5b" />
         <Bars title="Продажи по субъектам, ₽" items={bySubject} color="#173f4d" />
         <Bars title="Продажи по районам СПб, ₽" items={byDistrict} color="#cc8e2a" />
         <Bars title="Продажи по продуктам, шт." items={byProductQty} color="#a9b068" />
-        <Bars title="Продажи по сетям, шт." items={byNetworkQty} color="#2e7d5b" />
+        <Bars title="Продажи по сетям / организациям, шт." items={byNetworkQty} color="#2e7d5b" />
         <Bars title="Продажи по субъектам, шт." items={bySubjectQty} color="#173f4d" />
         <Bars title="Продажи по районам СПб, шт." items={byDistrictQty} color="#cc8e2a" />
       </div>
