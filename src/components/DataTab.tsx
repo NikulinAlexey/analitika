@@ -4,17 +4,6 @@ import { groupSum } from '../data/sales';
 
 const fmtInt = new Intl.NumberFormat('ru-RU');
 
-function isoWeek(d: string): string {
-  const dt = new Date(d + 'T00:00:00Z');
-  const day = (dt.getUTCDay() + 6) % 7;
-  dt.setUTCDate(dt.getUTCDate() - day + 3);
-  const firstThursday = new Date(Date.UTC(dt.getUTCFullYear(), 0, 4));
-  const fDay = (firstThursday.getUTCDay() + 6) % 7;
-  firstThursday.setUTCDate(firstThursday.getUTCDate() - fDay + 3);
-  const week = 1 + Math.round((dt.getTime() - firstThursday.getTime()) / (7 * 864e5));
-  return `${String(week).padStart(2, "0")} нед. ${dt.getUTCFullYear()}`;
-}
-
 function Bars({ title, items, color }: { title: string; items: { label: string; value: number }[]; color: string }) {
   const max = Math.max(...items.map((i) => i.value), 1);
   const shown = items.slice(0, 8);
@@ -127,10 +116,13 @@ export default function DataTab({ records, month }: Props) {
     () => groupSum(filtered.filter((r) => r.dst), (r) => r.dst ?? '', (r) => r.s),
     [filtered],
   );
-  const byWeek = useMemo(() => {
-    const arr = groupSum(filtered, (r) => isoWeek(r.d), (r) => r.s).sort((a, b) => a.label.localeCompare(b.label));
-    return arr;
-  }, [filtered]);
+  const byProductQty = useMemo(() => groupSum(filtered, (r) => r.p, (r) => r.q), [filtered]);
+  const byNetworkQty = useMemo(() => groupSum(filtered, (r) => r.n, (r) => r.q), [filtered]);
+  const bySubjectQty = useMemo(() => groupSum(filtered, (r) => r.sub, (r) => r.q), [filtered]);
+  const byDistrictQty = useMemo(
+    () => groupSum(filtered.filter((r) => r.dst), (r) => r.dst ?? '', (r) => r.q),
+    [filtered],
+  );
 
   const participants = useMemo(() => {
     const m = new Map<string, { name: string; net: string; city: string; sub: string; q: number; s: number }>();
@@ -167,7 +159,10 @@ export default function DataTab({ records, month }: Props) {
         <Bars title="Продажи по сетям, ₽" items={byNetwork} color="#2e7d5b" />
         <Bars title="Продажи по субъектам, ₽" items={bySubject} color="#173f4d" />
         <Bars title="Продажи по районам СПб, ₽" items={byDistrict} color="#cc8e2a" />
-        <Bars title="Динамика по неделям, ₽" items={byWeek} color="#b0533c" />
+        <Bars title="Продажи по продуктам, шт." items={byProductQty} color="#a9b068" />
+        <Bars title="Продажи по сетям, шт." items={byNetworkQty} color="#2e7d5b" />
+        <Bars title="Продажи по субъектам, шт." items={bySubjectQty} color="#173f4d" />
+        <Bars title="Продажи по районам СПб, шт." items={byDistrictQty} color="#cc8e2a" />
       </div>
 
       <div className="table-block table-block--data">
