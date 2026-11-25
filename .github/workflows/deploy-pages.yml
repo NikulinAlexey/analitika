@@ -1,15 +1,15 @@
 name: Deploy to GitHub Pages
 
-# Запускается при пуше из ЛЮБОЙ ветки
+# Публикация запускается только после попадания изменений в main
 on:
   push:
-  workflow_dispatch:
+    branches:
+      - main
 
 permissions:
   contents: write
 
-# Одновременные пуши из разных веток не будут конфликтовать:
-# новый запуск отменяет предыдущий
+# При нескольких последовательных пушах в main новый запуск отменяет предыдущий
 concurrency:
   group: gh-pages
   cancel-in-progress: true
