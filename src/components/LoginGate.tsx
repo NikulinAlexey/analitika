@@ -56,7 +56,7 @@ export default function LoginGate({ onSuccess }: { onSuccess: (pin: string) => v
         }}
       >
         <h1 className="login__title">Аналитика</h1>
-        <p className="login__subtitle">Введите код доступа (4 цифры)</p>
+        <p className="login__subtitle">Введите код доступа</p>
         <input
           ref={inputRef}
           className={`login__input${error ? ' is-error' : ''}`}
